@@ -1,0 +1,23 @@
+[project]
+name = "the_perceptron"
+version = "0.1.0"
+description = "A brief description of what my tool does"
+requires-python = ">=3.8"
+authors = [
+    {name = "Cara Carr", email = "cfc6@rice.edu"}
+]
+dependencies = [
+    "numpy>=1.20",
+    "matplotlib>=3.5",
+    "pandas>=1.3",
+    "scikit-learn>=1.0",
+    "seaborn>=0.12",
+    "mlxtend>=0.23",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
