@@ -1,9 +1,0 @@
-Metadata-Version: 2.4
-Name: the_perceptron
-Version: 0.1.0
-Summary: A brief description of what my tool does
-Author-email: Your Name <you@example.com>
-Requires-Python: >=3.8
-Requires-Dist: numpy>=1.20
-Requires-Dist: matplotlib>=3.5
-Requires-Dist: pandas>=1.3
