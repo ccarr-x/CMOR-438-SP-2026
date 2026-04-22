@@ -18,7 +18,11 @@ _Array = NDArray[Any]
 
 
 class Perceptron(object):
-    """Online perceptron with additive bias, trained by stochastic gradient steps.
+    """Implementation of the perceptron algorithm with additive bias, 
+    trained by stochastic weight updates. The perceptron algorithm is a 
+    simple, supervised learning algorithm and linear classifier that aims 
+    to linearly separate data into two classes.
+
 
     Parameters
     ----------
@@ -26,18 +30,16 @@ class Perceptron(object):
         Learning rate (step size) applied to each weight update when a
         sample is misclassified.
     epochs : int, default=20
-        Maximum number of full passes over the training data. Training stops
+        Maximum number of iterations over the training data. Training stops
         early if an epoch completes with no misclassifications.
 
     Attributes
     ----------
     w_ : ndarray
-        Learned weights, shape ``(n_features + 1,)``. The last element is the
-        bias term; set by :meth:`train`.
+        Learned weights, size ``(n_features + 1,)``. The last element is the
+        bias term
     errors_ : list of int
-        Misclassification count per completed epoch (length <= ``epochs``).
-        Set by :meth:`train`.
-    """
+        Misclassification count per completed epoch (length <= ``epochs``). """
 
     def __init__(self, eta: float = 0.5, epochs: int = 20) -> None:
         self.eta = eta
@@ -47,7 +49,7 @@ class Perceptron(object):
         """Fit the perceptron to training data.
 
         Weights (including bias) are initialized at random. For each epoch,
-        samples are visited in order; each misclassified point triggers an
+        samples are visited in order, and each misclassified point triggers an
         update proportional to ``eta`` and the signed error.
 
         Parameters
@@ -62,13 +64,13 @@ class Perceptron(object):
         self
             The fitted instance (for method chaining).
         """
-        self.w_ = np.random.rand(1 + X.shape[1])
+        self.w_ = np.random.rand(1 + X.size[1])
         self.errors_: List[int] = []
 
         for _ in range(self.epochs):
             errors = 0
             for xi, label in zip(X, y):
-                # Update rule: w <- w + eta * (y_true - y_pred) * x (bias analog)
+                # Update rule: w <- w + eta * (y_true - y_pred) * x (bias)
                 update = self.eta * (label - self.predict(xi))
                 self.w_[:-1] += update * xi
                 self.w_[-1] += update
