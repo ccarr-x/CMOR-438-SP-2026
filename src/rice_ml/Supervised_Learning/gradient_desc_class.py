@@ -8,7 +8,7 @@ an ascent or descent direction for your objective.
 
 from __future__ import annotations
 
-from typing import Any, Callable, List, Union
+from typing import Any, Callable, List, Optional, Union
 
 import numpy as np
 from numpy.typing import NDArray
@@ -41,7 +41,7 @@ class GradientDescent:
     Attributes
     ----------
     history : list
-        Sequence of iterates after each call to an ``optimize_*`` method.
+        Sequence of iterates after each call to an optimizing method.
         Cleared and repopulated by that method.
     """
 
@@ -111,6 +111,53 @@ class GradientDescent:
         for _ in range(self.num_iterations):
             gradient = self.gradient(current_cost)
             current_cost = current_cost - self.learning_rate * gradient
+            self.history.append(current_cost)
+
+        return np.array(self.history)
+
+    def stochastic_gd (
+        self,
+        current_cost: _Array,
+        n_samples: int,
+        random_state: Optional[int] = None,
+        shuffle: bool = True,
+    ) -> _Array:
+        """Stochastic gradient descent over sample-wise gradients.
+
+        This routine expects ``self.gradient`` to accept two inputs:
+
+        ``gradient(current_cost, sample_index)``
+
+        where ``sample_index`` selects which training example to use for that
+        stochastic step. One full pass over all indices is treated as an epoch.
+
+        Parameters
+        ----------
+        current_cost : ndarray
+            Initial parameter vector.
+        n_samples : int
+            Number of training examples; determines steps per epoch.
+        random_state : int, optional
+            Seed controlling per-epoch index shuffling.
+        shuffle : bool, default=True
+            Whether to randomize sample order each epoch.
+
+        Returns
+        -------
+        ndarray
+            Array of shape ``(num_iterations + 1, ...)`` stacking the parameter
+            vector at initialization and after each epoch.
+        """
+        self.history = [current_cost]
+        rng = np.random.default_rng(random_state)
+        indices = np.arange(n_samples)
+
+        for _ in range(self.num_iterations):
+            if shuffle:
+                rng.shuffle(indices)
+            for sample_idx in indices:
+                gradient = self.gradient(current_cost, int(sample_idx))
+                current_cost = current_cost - self.learning_rate * gradient
             self.history.append(current_cost)
 
         return np.array(self.history)
