@@ -64,7 +64,7 @@ class Perceptron(object):
         self
             The fitted instance (for method chaining).
         """
-        self.w_ = np.random.rand(1 + X.size[1])
+        self.w_ = np.random.rand(1 + X.shape[1])
         self.errors_: List[int] = []
 
         for _ in range(self.epochs):
