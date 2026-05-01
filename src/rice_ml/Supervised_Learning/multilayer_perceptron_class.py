@@ -1,7 +1,7 @@
 """Multi-layer perceptron (MLP) for binary classification.
 
-This extends the single-layer :class:`perceptron_class.Perceptron` idea to a
-stack of affine layers with nonlinear hidden units. Hidden layers use the
+This extends the single-layer Perceptron idea to a
+stack of linear layers with nonlinear hidden units. Hidden layers use the
 logistic sigmoid; the output layer is linear, and predictions use the same
 ``{-1, +1}`` threshold rule as the online perceptron. Weights are learned with
 full-batch gradient descent on mean squared error between the scalar output
