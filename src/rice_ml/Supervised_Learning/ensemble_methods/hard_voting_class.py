@@ -4,10 +4,7 @@ from typing import Any, List, Optional, Union, Sequence, Tuple, Literal
 
 from numpy.typing import NDArray
 import numpy as np
-from ..decision_tree_class import DecisionTreeClassifier
-from ..decision_tree_regressor import DecisionTreeRegressor
 
-import warnings
 
 _Array = NDArray[Any]
 
@@ -80,6 +77,6 @@ class HardVotingClassifier:
         X = np.asarray(X)
         # Collect predictions from each fitted estimator
         predictions = np.array([estimator.predict(X) for _, estimator in self.estimators_])
-
-        # Perform majority voting using base class method
-        return self.aggregate_hard_voting(predictions)
+        
+        # Perform majority voting
+        return np.apply_along_axis(lambda x: np.bincount(x.astype(int)).argmax(), axis=0, arr=predictions)

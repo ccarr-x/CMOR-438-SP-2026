@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, List, Optional, Union, Sequence, Tuple, Literal
+from typing import Any, List, Optional, Tuple, Literal
 
 from numpy.typing import NDArray
 import numpy as np
 
-from ..decision_tree_class import DecisionTreeClassifier
-from ..decision_tree_regressor import DecisionTreeRegressor
+from ..decision_tree_class import DecisionTree
 
-import warnings
 
 _Array = NDArray[Any]
 
@@ -51,30 +49,8 @@ class BaggingForestClassifier:
         self.min_samples_leaf = min_samples_leaf
         self.criterion = criterion
         self.random_state = random_state
-        self.trees: List[DecisionTreeClassifier] = []
+        self.trees: List[DecisionTree] = []
 
-    def aggregate(self, predictions: _Array) -> _Array:
-        """
-        Aggregate predictions from individual trees using majority voting.
-
-        Parameters
-        ----------
-        predictions : array-like of shape (n_estimators, n_samples)
-            The predictions from each tree for each sample.
-
-        Returns
-        -------
-        y_pred : array-like of shape (n_samples,)
-            The aggregated predicted class labels.
-        """
-        # predictions shape: (n_estimators, n_samples)
-        n_samples = predictions.shape[1]
-        y_pred = np.zeros(n_samples, dtype=int)
-        for i in range(n_samples):
-            votes = predictions[:, i]
-            y_pred[i] = np.bincount(votes).argmax()
-        return y_pred
-    
     def bootstrap(self, X: _Array, y: _Array) -> Tuple[_Array, _Array]:
         """
         Generate a bootstrap sample from the training data.
@@ -123,12 +99,11 @@ class BaggingForestClassifier:
         for _ in range(self.n_estimators):
             # Bootstrap sampling
             X_bootstrap, y_bootstrap = self.bootstrap(X, y)
-            tree = DecisionTreeClassifier(
+            tree = DecisionTree(
                 max_depth=self.max_depth,
                 min_samples_split=self.min_samples_split,
                 min_samples_leaf=self.min_samples_leaf,
                 criterion=self.criterion,
-                random_state=None,  # Each tree should have its own random state
             )
             tree.fit(X_bootstrap, y_bootstrap)
             self.trees.append(tree)
@@ -155,24 +130,5 @@ class BaggingForestClassifier:
         for i, tree in enumerate(self.trees):
             predictions[i] = tree.predict(X)
         # Aggregate using majority vote
-        return self.aggregate(predictions)
-
-    def score(self, X: _Array, y: _Array) -> float:
-        """
-        Return the mean accuracy on the given test data and labels.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            Test samples.
-        y : array-like of shape (n_samples,)
-            True labels for X.
-
-        Returns
-        -------
-        score : float
-            Mean accuracy of self.predict(X) wrt. y.
-        """
-        y_pred = self.predict(X)
-        return np.mean(y_pred == y)
+        return np.apply_along_axis(lambda x: np.bincount(x).argmax(), axis=0, arr=predictions)
     
