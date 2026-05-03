@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from typing import Any, List, Optional, Union, Sequence, Tuple, Literal
+from typing import Any, Optional, Union, Tuple
 
 from numpy.typing import NDArray
 import numpy as np
-
-import warnings
 
 _Array = NDArray[Any]
 
@@ -92,6 +90,7 @@ class DecisionTreeRegressor:
         self.min_samples_leaf = min_samples_leaf
         self.criterion = criterion
         self.tree = None
+        self.feature_importances_ = None
 
     def fit(self, X: _Array, y: _Array) -> None:
         """
@@ -108,9 +107,15 @@ class DecisionTreeRegressor:
         y = np.asarray(y)
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y must have the same number of samples")
-        self.tree = self._build_tree(X, y)
+        n_features = X.shape[1]
+        self.feature_importances_ = np.zeros(n_features)
+        self.tree = self._build_tree(X, y, self.feature_importances_)
+        # Normalize
+        total = np.sum(self.feature_importances_)
+        if total > 0:
+            self.feature_importances_ /= total
 
-    def _build_tree(self, X: _Array, y: _Array, depth: int = 0) -> Union[float, Tuple]:
+    def _build_tree(self, X: _Array, y: _Array, importances: _Array, depth: int = 0) -> Union[float, Tuple]:
         """
         Recursively build the decision tree.
 
@@ -120,6 +125,8 @@ class DecisionTreeRegressor:
             Feature matrix for the current node.
         y : array-like
             Target values for the current node.
+        importances : array
+            Feature importances array to update.
         depth : int
             Current depth in the tree.
 
@@ -151,8 +158,17 @@ class DecisionTreeRegressor:
             right_indices.sum() < self.min_samples_leaf):
             return np.mean(y)
 
-        left_tree = self._build_tree(X[left_indices], y[left_indices], depth + 1)
-        right_tree = self._build_tree(X[right_indices], y[right_indices], depth + 1)
+        # Calculate impurity reduction for feature importance
+        current_impurity = self._calculate_impurity(y)
+        left_impurity = self._calculate_impurity(y[left_indices])
+        right_impurity = self._calculate_impurity(y[right_indices])
+        left_size = left_indices.sum()
+        right_size = right_indices.sum()
+        reduction = current_impurity - (left_size / n_samples * left_impurity + right_size / n_samples * right_impurity)
+        importances[best_feature] += reduction
+
+        left_tree = self._build_tree(X[left_indices], y[left_indices], importances, depth + 1)
+        right_tree = self._build_tree(X[right_indices], y[right_indices], importances, depth + 1)
 
         return (best_feature, best_threshold, left_tree, right_tree)
 
@@ -209,6 +225,17 @@ class DecisionTreeRegressor:
         if len(sorted_values) <= 1:
             return np.array([])
         return (sorted_values[:-1] + sorted_values[1:]) / 2
+
+    def _calculate_impurity(self, y: _Array) -> float:
+        """
+        Calculate the impurity (variance for regression).
+        """
+        if self.criterion == 'mse':
+            return np.var(y)
+        elif self.criterion == 'mae':
+            return np.mean(np.abs(y - np.mean(y)))
+        else:
+            raise ValueError(f"Unknown criterion: {self.criterion}")
 
     def _calculate_score(self, X: _Array, y: _Array, feature: int, threshold: float) -> float:
         """

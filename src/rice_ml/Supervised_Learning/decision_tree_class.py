@@ -1,13 +1,9 @@
 from __future__ import annotations
 
-from typing import Any, List, Optional, Union, Sequence, Tuple, Literal
+from typing import Any
 
 from numpy.typing import NDArray
 import numpy as np
-
-import warnings
-
-_Array = NDArray[Any]
 
 """
 Decision Tree Classifier Module
@@ -92,6 +88,7 @@ class DecisionTree:
         self.min_samples_leaf = min_samples_leaf
         self.criterion = criterion
         self.tree = None
+        self.feature_importances_ = None
 
     def fit(self, X, y):
         """
@@ -108,9 +105,15 @@ class DecisionTree:
         y = np.asarray(y)
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y must have the same number of samples")
-        self.tree = self._build_tree(X, y)
+        n_features = X.shape[1]
+        self.feature_importances_ = np.zeros(n_features)
+        self.tree = self._build_tree(X, y, self.feature_importances_)
+        # Normalize
+        total = np.sum(self.feature_importances_)
+        if total > 0:
+            self.feature_importances_ /= total
 
-    def _build_tree(self, X, y, depth=0):
+    def _build_tree(self, X, y, importances, depth=0):
         """
         Recursively build the decision tree.
 
@@ -120,6 +123,8 @@ class DecisionTree:
             Feature matrix for the current node.
         y : array-like
             Target values for the current node.
+        importances : array
+            Feature importances array to update.
         depth : int
             Current depth in the tree.
 
@@ -152,8 +157,17 @@ class DecisionTree:
             right_indices.sum() < self.min_samples_leaf):
             return unique_classes[0]
 
-        left_tree = self._build_tree(X[left_indices], y[left_indices], depth + 1)
-        right_tree = self._build_tree(X[right_indices], y[right_indices], depth + 1)
+        # Calculate impurity reduction for feature importance
+        current_impurity = self._calculate_impurity(y)
+        left_impurity = self._calculate_impurity(y[left_indices])
+        right_impurity = self._calculate_impurity(y[right_indices])
+        left_size = left_indices.sum()
+        right_size = right_indices.sum()
+        reduction = current_impurity - (left_size / n_samples * left_impurity + right_size / n_samples * right_impurity)
+        importances[best_feature] += reduction
+
+        left_tree = self._build_tree(X[left_indices], y[left_indices], importances, depth + 1)
+        right_tree = self._build_tree(X[right_indices], y[right_indices], importances, depth + 1)
 
         return (best_feature, best_threshold, left_tree, right_tree)
 
@@ -198,6 +212,21 @@ class DecisionTree:
         if len(sorted_values) <= 1:
             return np.array([])
         return (sorted_values[:-1] + sorted_values[1:]) / 2
+
+    def _calculate_impurity(self, y):
+        """
+        Calculate the impurity of the node.
+        """
+        if self.criterion == 'gini':
+            _, counts = np.unique(y, return_counts=True)
+            probs = counts / len(y)
+            return 1 - np.sum(probs ** 2)
+        elif self.criterion == 'entropy':
+            _, counts = np.unique(y, return_counts=True)
+            probs = counts / len(y)
+            return -np.sum(probs * np.log2(probs + 1e-10))
+        else:
+            raise ValueError(f"Unknown criterion: {self.criterion}")
 
     def _information_gain(self, X, y, feature, threshold):
         """
