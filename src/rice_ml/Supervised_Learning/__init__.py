@@ -10,9 +10,7 @@ from .knn_class import KNearestNeighbors
 from .decision_tree_class import DecisionTree
 from .decision_tree_regressor import DecisionTreeRegressor
 
-from .ensemble_methods.bagging_forest_class import BaggingForestClassifier
-from .ensemble_methods.random_forest_class import RandomForestClassifier
-from .ensemble_methods.hard_voting_class import HardVotingClassifier
+from .ensemble_methods import * # Import all ensemble methods
 
 __all__ = [
     "GradientDescent",
@@ -24,7 +22,4 @@ __all__ = [
     "KNearestNeighbors",
     "DecisionTree",
     "DecisionTreeRegressor",
-    "BaggingForestClassifier",
-    "RandomForestClassifier",
-    "HardVotingClassifier"
 ]
