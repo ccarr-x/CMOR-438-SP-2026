@@ -13,7 +13,6 @@ from typing import Any, List, Union
 import numpy as np
 from numpy.typing import NDArray
 
-# Alias for brevity in signatures
 _Array = NDArray[Any]
 
 
