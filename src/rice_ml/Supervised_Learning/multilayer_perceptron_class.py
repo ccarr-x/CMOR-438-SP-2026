@@ -2,10 +2,9 @@
 
 This extends the single-layer Perceptron idea to a
 stack of linear layers with nonlinear hidden units. Hidden layers use the
-logistic sigmoid; the output layer is linear, and predictions use the same
-``{-1, +1}`` threshold rule as the online perceptron. Weights are learned with
-full-batch gradient descent on mean squared error between the scalar output
-and the target label, using backpropagation through the hidden layers.
+logistic sigmoid; the output layer uses sigmoid for binary probabilities.
+Weights are learned with full-batch gradient descent on binary cross-entropy loss
+using backpropagation through the hidden layers.
 """
 
 from __future__ import annotations
@@ -65,6 +64,12 @@ class MultiLayerPerceptron:
         epochs: int = 200,
         random_state: Optional[int] = None,
     ) -> None:
+        if any(h <= 0 for h in hidden_layer_sizes):
+            raise ValueError("hidden_layer_sizes must contain positive integers.")
+        if eta <= 0:
+            raise ValueError("eta must be positive.")
+        if epochs <= 0:
+            raise ValueError("epochs must be a positive integer.")
         self.hidden_layer_sizes = tuple(int(h) for h in hidden_layer_sizes)
         self.eta = eta
         self.epochs = epochs
@@ -99,7 +104,7 @@ class MultiLayerPerceptron:
             if layer_idx < len(self.weights_) - 1:
                 a = _sigmoid(z)
             else:
-                a = z
+                a = _sigmoid(z)  # Apply sigmoid to output for binary classification
             activations.append(a)
         out = activations[-1]
         return out, zs, activations
@@ -139,7 +144,7 @@ class MultiLayerPerceptron:
         X : ndarray of shape (n_samples, n_features)
             Training feature matrix.
         y : ndarray of shape (n_samples,)
-            Targets in ``{-1, +1}`` (same convention as :class:`perceptron_class.Perceptron`).
+            Targets in ``{0, 1}`` (binary classification labels).
 
         Returns
         -------
@@ -151,13 +156,18 @@ class MultiLayerPerceptron:
             raise ValueError("X must be two-dimensional (n_samples, n_features).")
         if y.shape[0] != X.shape[0]:
             raise ValueError("y must have one entry per row of X.")
+        if not np.all(np.isin(y, [0, 1])):
+            raise ValueError("y must contain only 0 or 1.")
 
         self._init_parameters(X.shape[1])
         self.loss_history_ = []
 
         for _ in range(self.epochs):
             out, zs, activations = self._forward(X)
-            loss = 0.5 * float(np.mean((out.ravel() - y) ** 2))
+            # Binary cross-entropy loss
+            eps = 1e-15
+            out_clipped = np.clip(out.ravel(), eps, 1 - eps)
+            loss = -np.mean(y * np.log(out_clipped) + (1 - y) * np.log(1 - out_clipped))
             self.loss_history_.append(loss)
 
             d_w, d_b = self._backward(y, zs, activations)
@@ -168,11 +178,10 @@ class MultiLayerPerceptron:
         return self
 
     def net_input(self, X: _Array) -> Union[float, _Array]:
-        """Final linear output before thresholding (analogous to the perceptron score).
+        """Predicted probabilities for class 1.
 
-        For a single sample of shape ``(n_features,)``, returns a scalar. For a
-        batch ``(n_samples, n_features)``, returns a 1-D array of length
-        ``n_samples``.
+        For a single sample of shape ``(n_features,)``, returns a scalar between 0 and 1.
+        For a batch ``(n_samples, n_features)``, returns a 1-D array of probabilities.
         """
         X = np.asarray(X, dtype=float)
         single = X.ndim == 1
@@ -185,8 +194,8 @@ class MultiLayerPerceptron:
         return out_1d
 
     def predict(self, X: _Array) -> Union[int, _Array]:
-        """Predict ``1`` if net input >= 0, else ``-1`` (same rule as the perceptron)."""
+        """Predict ``1`` if probability >= 0.5, else ``0``."""
         scores = self.net_input(X)
         if isinstance(scores, float):
-            return 1 if scores >= 0.0 else -1
-        return np.where(scores >= 0.0, 1, -1)
+            return 1 if scores >= 0.5 else 0
+        return np.where(scores >= 0.5, 1, 0)
