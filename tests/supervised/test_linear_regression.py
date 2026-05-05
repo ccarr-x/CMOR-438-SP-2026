@@ -6,7 +6,7 @@ import pytest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
-from rice_ml.Supervised_Learning.linear_regression_class import LinearRegression
+from rice_ml.Supervised_Learning.linear_regression_class import SingleNeuronLinearRegression
 
 @pytest.fixture
 def sample_data():
@@ -17,14 +17,14 @@ def sample_data():
 
 def test_linear_regression(sample_data):
     X, y = sample_data
-    model = LinearRegression()
+    model = SingleNeuronLinearRegression()
     model.fit(X, y)
     predictions = model.predict(X)
     assert np.allclose(predictions, y, atol=1e-2), f"Expected {y}, but got {predictions}"
 
 def test_linear_regression_unseen_data(sample_data):
     X, y = sample_data
-    model = LinearRegression()
+    model = SingleNeuronLinearRegression()
     model.fit(X, y)
     unseen_X = np.array([[1.5], [2.5], [3.5]])
     predictions = model.predict(unseen_X)
@@ -32,7 +32,7 @@ def test_linear_regression_unseen_data(sample_data):
     assert np.all(predictions >= 1) and np.all(predictions <= 5), f"Expected predictions to be between 1 and 5, but got {predictions}"
 
 def test_linear_regression_invalid_input():
-    model = LinearRegression()
+    model = SingleNeuronLinearRegression()
     with pytest.raises(ValueError):
         model.fit([[1], [2]], [1])  # Mismatched number of samples and labels
     with pytest.raises(ValueError):

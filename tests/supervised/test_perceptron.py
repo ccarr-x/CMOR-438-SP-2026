@@ -15,6 +15,7 @@ def sample_data():
     return X, y
 
 def test_perceptron(sample_data):
+    """Test basic perceptron training and prediction on linearly separable data."""
     X, y = sample_data
     model = Perceptron(learning_rate=0.1, n_iters=10)
     model.fit(X, y)

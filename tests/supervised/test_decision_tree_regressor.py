@@ -6,7 +6,7 @@ import pytest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
-from rice_ml.Supervised_Learning.linear_decision_tree_regressor import DecisionTreeRegressor
+from rice_ml.Supervised_Learning.decision_tree_regressor import DecisionTreeRegressor
 
 @pytest.fixture
 def sample_data():
