@@ -24,9 +24,9 @@ class PostProcessor:
         self,
         y_true: np.ndarray,
         y_pred: np.ndarray,
+        labels: Optional[np.ndarray] = None,
         *,
         average: AverageType = "binary",
-        labels: Optional[np.ndarray] = None,
         zero_division: int = 0,
     ) -> Dict[str, Any]:
         """Return classification error rate, precision, and confusion matrix."""
@@ -56,7 +56,6 @@ class PostProcessor:
         self,
         y_true: np.ndarray,
         y_pred: np.ndarray,
-        *,
         n_features: Optional[int] = None,
     ) -> Dict[str, float]:
         """Return regression error metrics and ANOVA summary statistics."""

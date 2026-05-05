@@ -14,7 +14,7 @@ def train_test_split(
     y: ArrayLike,
     test_size: float = 0.2,
     random_state: Optional[int] = None,
-    shuffle: bool = True,
+    shuffle: bool = True
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Split feature/target data into train and test sets.
@@ -95,6 +95,7 @@ def standardize(
     X_test_scaled = (X_test_arr - mean) / std_safe
     return X_train_scaled, X_test_scaled
 
+
 def normalize(X: ArrayLike) -> np.ndarray:
     """
     Normalize features to unit norm.
@@ -113,6 +114,7 @@ def normalize(X: ArrayLike) -> np.ndarray:
     norms = np.linalg.norm(X_arr, axis=1, keepdims=True)
     norms_safe = np.where(norms == 0, 1.0, norms)
     return X_arr / norms_safe
+
 
 def min_max_scale(X: ArrayLike) -> np.ndarray:
     """
@@ -134,6 +136,7 @@ def min_max_scale(X: ArrayLike) -> np.ndarray:
     ranges = max_vals - min_vals
     ranges_safe = np.where(ranges == 0, 1.0, ranges)
     return (X_arr - min_vals) / ranges_safe
+    
 
 def encode_labels(y: ArrayLike) -> np.ndarray:
     """
@@ -152,6 +155,7 @@ def encode_labels(y: ArrayLike) -> np.ndarray:
     y_arr = np.asarray(y)
     unique_labels, encoded = np.unique(y_arr, return_inverse=True)
     return encoded
+
 
 def transform_labels(y: ArrayLike, mapping: dict) -> np.ndarray:
     """
@@ -173,4 +177,4 @@ def transform_labels(y: ArrayLike, mapping: dict) -> np.ndarray:
     transformed = np.vectorize(mapping.get)(y_arr)
     if np.any(transformed == None):
         raise ValueError("All labels in y must be present in the mapping keys.")
-    return transformed 
+    return transformed

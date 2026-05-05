@@ -113,3 +113,63 @@ class Perceptron(object):
             Predicted label(s), same shape as the leading dimensions of ``X``.
         """
         return np.where(self.net_input(X) >= 0.0, 1, -1)
+
+    def plot_decision_boundary(self, X: _Array, y: _Array) -> None:
+        """Visualize the decision boundary of the trained perceptron.
+
+        This method is only functional for 2D feature spaces. It creates a
+        contour plot showing the regions classified as ``-1`` and ``1`` based
+        on the learned weights, overlaid with the training data points.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, 2)
+            Training feature matrix with exactly 2 features.
+        y : ndarray of shape (n_samples,)
+            Target labels corresponding to each row of ``X``.
+
+        Returns
+        -------
+        None
+            Displays a plot of the decision boundary and training points.
+        """
+        import matplotlib.pyplot as plt
+
+        if X.shape[1] != 2:
+            raise ValueError("plot_decision_boundary is only supported for 2D feature spaces.")
+
+        # Create a grid of points to evaluate the decision function
+        x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+        y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+        xx, yy = np.meshgrid(np.linspace(x_min, x_max, 200), np.linspace(y_min, y_max, 200))
+        Z = self.predict(np.c_[xx.ravel(), yy.ravel()])
+        Z = Z.reshape(xx.shape)
+
+        # Plotting
+        plt.contourf(xx, yy, Z, alpha=0.3)
+        plt.scatter(X[:, 0], X[:, 1], c=y, edgecolors='k', marker='o')
+        plt.title('Perceptron Decision Boundary')
+        plt.xlabel('Feature 1')
+        plt.ylabel('Feature 2')
+        plt.show()
+
+    def plot_loss(self) -> None:
+        """Plot the number of misclassifications per epoch.
+
+        This method visualizes the training progress by showing how the number
+        of errors decreases over epochs. It can help diagnose convergence issues.
+
+        Returns
+        -------
+        None
+            Displays a plot of misclassifications per epoch.
+        """
+        import matplotlib.pyplot as plt
+
+        plt.plot(range(1, len(self.errors_) + 1), self.errors_, marker='o')
+        plt.title('Perceptron Training Progress')
+        plt.xlabel('Epochs')
+        plt.ylabel('Number of misclassifications')
+        plt.show()
+
+        
