@@ -94,3 +94,83 @@ def standardize(
     X_test_arr = np.asarray(X_test, dtype=float)
     X_test_scaled = (X_test_arr - mean) / std_safe
     return X_train_scaled, X_test_scaled
+
+def normalize(X: ArrayLike) -> np.ndarray:
+    """
+    Normalize features to unit norm.
+
+    Parameters
+    ----------
+    X : array-like
+        Feature matrix to normalize.
+
+    Returns
+    -------
+    np.ndarray
+        Normalized feature matrix.
+    """
+    X_arr = np.asarray(X, dtype=float)
+    norms = np.linalg.norm(X_arr, axis=1, keepdims=True)
+    norms_safe = np.where(norms == 0, 1.0, norms)
+    return X_arr / norms_safe
+
+def min_max_scale(X: ArrayLike) -> np.ndarray:
+    """
+    Scale features to the [0, 1] range.
+
+    Parameters
+    ----------
+    X : array-like
+        Feature matrix to scale.
+
+    Returns
+    -------
+    np.ndarray
+        Scaled feature matrix.
+    """
+    X_arr = np.asarray(X, dtype=float)
+    min_vals = X_arr.min(axis=0)
+    max_vals = X_arr.max(axis=0)
+    ranges = max_vals - min_vals
+    ranges_safe = np.where(ranges == 0, 1.0, ranges)
+    return (X_arr - min_vals) / ranges_safe
+
+def encode_labels(y: ArrayLike) -> np.ndarray:
+    """
+    Encode categorical labels as integers.
+
+    Parameters
+    ----------
+    y : array-like
+        Target labels to encode.
+
+    Returns
+    -------
+    np.ndarray
+        Encoded integer labels.
+    """
+    y_arr = np.asarray(y)
+    unique_labels, encoded = np.unique(y_arr, return_inverse=True)
+    return encoded
+
+def transform_labels(y: ArrayLike, mapping: dict) -> np.ndarray:
+    """
+    Transform labels using a provided mapping.
+
+    Parameters
+    ----------
+    y : array-like
+        Target labels to transform.
+    mapping : dict
+        Dictionary mapping original labels to new values.
+
+    Returns
+    -------
+    np.ndarray
+        Transformed labels.
+    """
+    y_arr = np.asarray(y)
+    transformed = np.vectorize(mapping.get)(y_arr)
+    if np.any(transformed == None):
+        raise ValueError("All labels in y must be present in the mapping keys.")
+    return transformed 

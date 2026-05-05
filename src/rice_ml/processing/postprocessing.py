@@ -107,3 +107,21 @@ class PostProcessor:
             "ms_error": mse_anova,
             "f_statistic": f_stat,
         }
+
+    def accuracy(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:
+        """Return classification accuracy."""
+        y_true_arr = np.asarray(y_true).ravel()
+        y_pred_arr = np.asarray(y_pred).ravel()
+        if y_true_arr.shape[0] != y_pred_arr.shape[0]:
+            raise ValueError("y_true and y_pred must have the same length.")
+        return float(np.mean(y_true_arr == y_pred_arr))
+
+    def r2_score(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:
+        """Return R^2 score for regression."""
+        y_true_arr = np.asarray(y_true, dtype=float).ravel()
+        y_pred_arr = np.asarray(y_pred, dtype=float).ravel()
+        if y_true_arr.shape[0] != y_pred_arr.shape[0]:
+            raise ValueError("y_true and y_pred must have the same length.")
+        if y_true_arr.size < 2:
+            raise ValueError("At least two samples are required for R^2 score.")
+        return float(r2_score(y_true_arr, y_pred_arr))
