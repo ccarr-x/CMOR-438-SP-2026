@@ -191,7 +191,7 @@ class DecisionTree:
         best_threshold : float or None
             Best threshold value for the split.
         """
-        best_gain = -1
+        best_gain = 0.0
         best_feature = None
         best_threshold = None
 
@@ -289,11 +289,12 @@ class DecisionTree:
         p_left = left_size / len(y)
         p_right = right_size / len(y)
 
-        gini_left = 1 - sum((np.bincount(y[left_indices]) / left_size) ** 2)
-        gini_right = 1 - sum((np.bincount(y[right_indices]) / right_size) ** 2)
+        current_gini = self._calculate_impurity(y)
+        gini_left = self._calculate_impurity(y[left_indices])
+        gini_right = self._calculate_impurity(y[right_indices])
+        weighted_child_gini = p_left * gini_left + p_right * gini_right
 
-        gini_gain = (p_left * gini_left + p_right * gini_right)
-        return gini_gain
+        return current_gini - weighted_child_gini
 
     def _entropy_gain(self, X, y, feature, threshold):
         """

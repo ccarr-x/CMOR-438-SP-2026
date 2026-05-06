@@ -7,10 +7,12 @@ from typing import Any, Dict, Literal, Optional
 import numpy as np
 from sklearn.metrics import (
     confusion_matrix,
+    f1_score as sklearn_f1_score,
     mean_absolute_error,
     mean_squared_error,
     precision_score,
     r2_score,
+    recall_score,
 )
 
 AverageType = Optional[Literal["binary", "micro", "macro", "weighted"]]
@@ -49,6 +51,22 @@ class PostProcessor:
         return {
             "classification_error": error_rate,
             "precision": precision,
+            "recall": float(
+                recall_score(
+                    y_true_arr,
+                    y_pred_arr,
+                    average=average,
+                    zero_division=zero_division,
+                )
+            ),
+            "f1_score": float(
+                sklearn_f1_score(
+                    y_true_arr,
+                    y_pred_arr,
+                    average=average,
+                    zero_division=zero_division,
+                )
+            ),
             "confusion_matrix": cm,
         }
 
@@ -137,39 +155,33 @@ class PostProcessor:
                 zero_division=zero_division,
             )
         )
+
     def recall(self, y_true: np.ndarray, y_pred: np.ndarray, average: AverageType = "binary", zero_division: int = 0) -> float:
         """Return classification recall."""
         y_true_arr = np.asarray(y_true).ravel()
         y_pred_arr = np.asarray(y_pred).ravel()
-        if average == "binary" and len(np.unique(y_true_arr)) > 2:
-            raise ValueError("Average 'binary' is not valid for multi-class data.")
-        if average in {"micro", "macro", "weighted"} and len(np.unique(y_true_arr)) < 2:
-            raise ValueError(f"Average '{average}' is not valid for binary data.")
         if y_true_arr.shape[0] != y_pred_arr.shape[0]:
             raise ValueError("y_true and y_pred must have the same length.")
-        return float(self.recall(
-            y_true_arr,
-            y_pred_arr,
-            average=average,
-            zero_division=zero_division,
-        ))
-        
+        return float(
+            recall_score(
+                y_true_arr,
+                y_pred_arr,
+                average=average,
+                zero_division=zero_division,
+            )
+        )
+
     def f1_score(self, y_true: np.ndarray, y_pred: np.ndarray, average: AverageType = "binary", zero_division: int = 0) -> float:
         """Return classification F1 score."""
-        p = self.precision(
-            y_true,
-            y_pred,
-            average=average,
-            zero_division=zero_division,
+        y_true_arr = np.asarray(y_true).ravel()
+        y_pred_arr = np.asarray(y_pred).ravel()
+        if y_true_arr.shape[0] != y_pred_arr.shape[0]:
+            raise ValueError("y_true and y_pred must have the same length.")
+        return float(
+            sklearn_f1_score(
+                y_true_arr,
+                y_pred_arr,
+                average=average,
+                zero_division=zero_division,
+            )
         )
-        r = self.recall(
-            y_true,
-            y_pred,
-            average=average,
-            zero_division=zero_division,
-        )
-        if p + r == 0:
-            return 0.0
-        return float(2 * (p * r) / (p + r))
-    
-    
