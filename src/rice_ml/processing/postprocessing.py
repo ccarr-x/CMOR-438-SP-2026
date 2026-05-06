@@ -106,7 +106,14 @@ class PostProcessor:
             "ms_error": mse_anova,
             "f_statistic": f_stat,
         }
-
+    def confusion_matrix(self, y_true: np.ndarray, y_pred: np.ndarray, labels: Optional[np.ndarray] = None) -> np.ndarray:
+            """Return confusion matrix for classification."""
+            y_true_arr = np.asarray(y_true).ravel()
+            y_pred_arr = np.asarray(y_pred).ravel()
+            if y_true_arr.shape[0] != y_pred_arr.shape[0]:
+                raise ValueError("y_true and y_pred must have the same length.")
+            return confusion_matrix(y_true_arr, y_pred_arr, labels=labels)
+        
     def accuracy(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:
         """Return classification accuracy."""
         y_true_arr = np.asarray(y_true).ravel()
@@ -114,13 +121,55 @@ class PostProcessor:
         if y_true_arr.shape[0] != y_pred_arr.shape[0]:
             raise ValueError("y_true and y_pred must have the same length.")
         return float(np.mean(y_true_arr == y_pred_arr))
-
-    def r2_score(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:
-        """Return R^2 score for regression."""
-        y_true_arr = np.asarray(y_true, dtype=float).ravel()
-        y_pred_arr = np.asarray(y_pred, dtype=float).ravel()
+    
+    # The F1 score is typically computed as the harmonic mean of precision and recall:
+    def precision(self, y_true: np.ndarray, y_pred: np.ndarray, average: AverageType = "binary", zero_division: int = 0) -> float:
+        """Return classification precision."""
+        y_true_arr = np.asarray(y_true).ravel()
+        y_pred_arr = np.asarray(y_pred).ravel()
         if y_true_arr.shape[0] != y_pred_arr.shape[0]:
             raise ValueError("y_true and y_pred must have the same length.")
-        if y_true_arr.size < 2:
-            raise ValueError("At least two samples are required for R^2 score.")
-        return float(r2_score(y_true_arr, y_pred_arr))
+        return float(
+            precision_score(
+                y_true_arr,
+                y_pred_arr,
+                average=average,
+                zero_division=zero_division,
+            )
+        )
+    def recall(self, y_true: np.ndarray, y_pred: np.ndarray, average: AverageType = "binary", zero_division: int = 0) -> float:
+        """Return classification recall."""
+        y_true_arr = np.asarray(y_true).ravel()
+        y_pred_arr = np.asarray(y_pred).ravel()
+        if average == "binary" and len(np.unique(y_true_arr)) > 2:
+            raise ValueError("Average 'binary' is not valid for multi-class data.")
+        if average in {"micro", "macro", "weighted"} and len(np.unique(y_true_arr)) < 2:
+            raise ValueError(f"Average '{average}' is not valid for binary data.")
+        if y_true_arr.shape[0] != y_pred_arr.shape[0]:
+            raise ValueError("y_true and y_pred must have the same length.")
+        return float(self.recall(
+            y_true_arr,
+            y_pred_arr,
+            average=average,
+            zero_division=zero_division,
+        ))
+        
+    def f1_score(self, y_true: np.ndarray, y_pred: np.ndarray, average: AverageType = "binary", zero_division: int = 0) -> float:
+        """Return classification F1 score."""
+        p = self.precision(
+            y_true,
+            y_pred,
+            average=average,
+            zero_division=zero_division,
+        )
+        r = self.recall(
+            y_true,
+            y_pred,
+            average=average,
+            zero_division=zero_division,
+        )
+        if p + r == 0:
+            return 0.0
+        return float(2 * (p * r) / (p + r))
+    
+    

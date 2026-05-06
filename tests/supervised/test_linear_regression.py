@@ -6,7 +6,9 @@ import pytest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
-from rice_ml.Supervised_Learning.linear_regression_class import SingleNeuronLinearRegression
+from rice_ml.Supervised_Learning.linear_regression_class import (
+    SingleNeuronLinearRegression,
+)
 
 @pytest.fixture
 def sample_data():

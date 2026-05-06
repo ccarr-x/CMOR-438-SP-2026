@@ -199,3 +199,56 @@ class MultiLayerPerceptron:
         if isinstance(scores, float):
             return 1 if scores >= 0.5 else 0
         return np.where(scores >= 0.5, 1, 0)
+
+    def plot_loss_history(self) -> None:
+        """Plot the loss history over epochs."""
+        if not self.loss_history_:
+            raise ValueError("No loss history to plot. Train the model first.")
+        import matplotlib.pyplot as plt
+
+        plt.figure(figsize=(8, 5))
+        plt.plot(self.loss_history_, marker="o")
+        plt.title("MLP Training Loss History")
+        plt.xlabel("Epoch")
+        plt.ylabel("Binary Cross-Entropy Loss")
+        plt.grid()
+        plt.show()
+
+    def plot_decision_regions(self, X: _Array, y: _Array) -> None:
+        """Visualize the decision regions of the trained MLP.
+
+        This method is only functional for 2D feature spaces. It creates a
+        contour plot showing the regions classified as ``0`` and ``1`` based
+        on the learned weights, overlaid with the training data points.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, 2)
+            Training feature matrix with exactly 2 features.
+        y : ndarray of shape (n_samples,)
+            Target labels corresponding to each row of ``X``.
+
+        Returns
+        -------
+        None
+            Displays a plot of the decision regions and training points.
+        """
+        import matplotlib.pyplot as plt
+
+        if X.shape[1] != 2:
+            raise ValueError("plot_decision_regions is only supported for 2D feature spaces.")
+
+        # Create a grid of points to evaluate the decision function
+        x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+        y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+        xx, yy = np.meshgrid(np.linspace(x_min, x_max, 200), np.linspace(y_min, y_max, 200))
+        Z = self.predict(np.c_[xx.ravel(), yy.ravel()])
+        Z = Z.reshape(xx.shape)
+        # Plotting
+        plt.contourf(xx, yy, Z, alpha=0.3)
+        plt.scatter(X[:, 0], X[:, 1], c=y, edgecolors="k", marker="o")
+        plt.title("MLP Decision Regions")
+        plt.xlabel("Feature 1")
+        plt.ylabel("Feature 2")
+        plt.show()
+

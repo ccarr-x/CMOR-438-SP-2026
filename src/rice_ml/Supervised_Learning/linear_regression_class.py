@@ -38,7 +38,7 @@ class SingleNeuronLinearRegression:
     def __init__(
         self,
         eta: float = 0.01,
-        epochs: int = 500,
+        epochs: int = 5000,
         random_state: Optional[int] = None,
     ) -> None:
         self.eta = eta
@@ -46,6 +46,7 @@ class SingleNeuronLinearRegression:
         self.random_state = random_state
         self.loss_history_: List[float] = []
         self.param_history_: List[_Array] = []
+        self._is_fitted = False
         self._model = SingleNeuronModel(
             task="linear",
             eta=eta,
@@ -58,14 +59,26 @@ class SingleNeuronLinearRegression:
         self._model.train(X, y)
         self.w_ = self._model.w_.copy()
         self.b_ = float(self._model.b_)
+        self.weights_ = self.w_
+        self.bias_ = self.b_
         self.loss_history_ = list(self._model.loss_history_)
         self.param_history_ = [p.copy() for p in self._model.param_history_]
+        self._is_fitted = True
         return self
+
+    def fit(self, X: _Array, y: _Array) -> SingleNeuronLinearRegression:
+        """Alias for :meth:`train` matching common estimator APIs."""
+        return self.train(X, y)
 
     def net_input(self, X: _Array) -> Union[float, _Array]:
         """Compute linear output(s) ``X @ w + b``."""
+        if not self._is_fitted:
+            raise ValueError("SingleNeuronLinearRegression is not fitted yet.")
         return self._model.net_input(X)
 
     def predict(self, X: _Array) -> Union[float, _Array]:
         """Predict target value(s) with the trained linear neuron."""
         return self.net_input(X)
+
+
+LinearRegression = SingleNeuronLinearRegression
