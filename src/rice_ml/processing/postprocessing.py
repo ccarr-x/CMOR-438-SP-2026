@@ -5,15 +5,6 @@ from __future__ import annotations
 from typing import Any, Dict, Literal, Optional
 
 import numpy as np
-from sklearn.metrics import (
-    confusion_matrix,
-    f1_score as sklearn_f1_score,
-    mean_absolute_error,
-    mean_squared_error,
-    precision_score,
-    r2_score,
-    recall_score,
-)
 
 AverageType = Optional[Literal["binary", "micro", "macro", "weighted"]]
 __all__ = ["PostProcessor"]
@@ -148,7 +139,7 @@ class PostProcessor:
         if y_true_arr.shape[0] != y_pred_arr.shape[0]:
             raise ValueError("y_true and y_pred must have the same length.")
         return float(
-            precision_score(
+            precision(
                 y_true_arr,
                 y_pred_arr,
                 average=average,
@@ -163,7 +154,7 @@ class PostProcessor:
         if y_true_arr.shape[0] != y_pred_arr.shape[0]:
             raise ValueError("y_true and y_pred must have the same length.")
         return float(
-            recall_score(
+            recall(
                 y_true_arr,
                 y_pred_arr,
                 average=average,
@@ -178,10 +169,18 @@ class PostProcessor:
         if y_true_arr.shape[0] != y_pred_arr.shape[0]:
             raise ValueError("y_true and y_pred must have the same length.")
         return float(
-            sklearn_f1_score(
+            f1_score(
                 y_true_arr,
                 y_pred_arr,
                 average=average,
                 zero_division=zero_division,
             )
         )
+
+    def r2_score(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:
+        """Return regression R² score."""
+        y_true_arr = np.asarray(y_true).ravel()
+        y_pred_arr = np.asarray(y_pred).ravel()
+        if y_true_arr.shape[0] != y_pred_arr.shape[0]:
+            raise ValueError("y_true and y_pred must have the same length.")
+        return float(r2_score(y_true_arr, y_pred_arr))

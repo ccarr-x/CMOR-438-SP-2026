@@ -4,3 +4,24 @@ __pycache__/
 *.egg-info/
 .ipynb_checkpoints/
 .DS_Store
+
+# VS Code
+.vscode/
+
+# Jupyter
+.jupyter/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+.DS_Store
+
+# Pytest
+.pytest_cache/
+
+# Local IDE settings
+.local/
+.idea/
+
