@@ -197,3 +197,37 @@ class KMeans:
         self.fit(X)
         return self.transform(X)
 
+    def plot_decision_boundary(self, X: _Array, y: _Array) -> None:
+        """Plot the decision boundary for 2D data.
+        
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data.
+        y : array-like of shape (n_samples,)
+            Target values.
+        """
+        if X.shape[1] != 2:
+            raise ValueError("X must be two-dimensional (n_samples, 2).")
+        if y.shape[0] != X.shape[0]:
+            raise ValueError("X and y must have the same number of samples.")
+        
+        # Create a mesh to plot the decision boundary
+        h = 0.02  # step size in the mesh
+        x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+        y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+        xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                             np.arange(y_min, y_max, h))
+        
+        # Make predictions on the mesh
+        Z = self.predict(np.c_[xx.ravel(), yy.ravel()])
+        Z = Z.reshape(xx.shape)
+        
+        # Plot the decision boundary
+        plt.contourf(xx, yy, Z, alpha=0.8)
+        plt.scatter(X[:, 0], X[:, 1], c=y, edgecolors='k')
+        plt.title("K-Means Decision Boundary")
+        plt.show()
+
+        
+
