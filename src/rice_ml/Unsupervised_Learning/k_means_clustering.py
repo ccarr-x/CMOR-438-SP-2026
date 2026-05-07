@@ -67,10 +67,14 @@ class KMeans:
                 f"n_clusters ({self.n_clusters}) cannot exceed n_samples ({n_samples})."
             )
 
-        # Initialize cluster centers randomly from the data points
+        # Initialize cluster centers using kmeans++ when available
         rng = np.random.default_rng(self.random_state)
         initial_idx = rng.choice(n_samples, size=self.n_clusters, replace=False)
         self.cluster_centers_ = X_arr[initial_idx]
+        
+        # Use kmeans++ initialization for better convergence
+        if hasattr(self, '_kmeans_plus_plus_init'):
+            self.cluster_centers_ = self._kmeans_plus_plus_init(X_arr, self.n_clusters, rng)
 
         for iteration in range(self.max_iter):
             # Assign labels based on closest center
