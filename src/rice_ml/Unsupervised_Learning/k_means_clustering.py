@@ -45,6 +45,18 @@ class KMeans:
         self.inertia_: float = 0.0
         self.n_iter_: int = 0
 
+    def _kmeans_plus_plus_init(self, X, n_clusters, rng):
+    """K-means++ initialization for better convergence."""
+    centers = []
+    centers.append(X[rng.integers(len(X))])
+    
+    for _ in range(1, n_clusters):
+        distances = np.array([min(np.linalg.norm(x - c)**2 for c in centers) for x in X])
+        probabilities = distances / distances.sum()
+        centers.append(X[rng.choice(len(X), p=probabilities)])
+    
+    return np.array(centers)
+
     def fit(self, X: _Array) -> KMeans:
         """Compute k-means clustering.
 
@@ -111,6 +123,8 @@ class KMeans:
         -------
         labels : ndarray of shape (n_samples,)
             Index of the cluster each sample belongs to.
+        inertia : float
+            Sum of squared distances to closest cluster center.
         """
         X_arr = np.asarray(X, dtype=float)
         if X_arr.ndim != 2:
@@ -119,39 +133,67 @@ class KMeans:
             raise ValueError("KMeans instance is not fitted yet. Call 'fit' with appropriate data.")
 
         distances = np.linalg.norm(X_arr[:, np.newaxis] - self.cluster_centers_, axis=2)
-        return np.argmin(distances, axis=1)
-    
-    def fit_predict(self, X: _Array) -> _Array:
-        """Compute cluster centers and predict cluster index for each sample.
+        inertia = np.sum((X_arr - self.cluster_centers_[np.argmin(distances, axis=1)]) ** 2)
+        return np.argmin(distances, axis=1), inertia
 
+    def score(self, X: _Array) -> float:
+        """Return the opposite of the sum of squared distances to closest cluster center.
+        
+        This is the negative of the inertia, which is the sum of squared distances 
+        from each point to its assigned cluster center.
+        
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data to cluster.
-
+            New data to score.
+            
         Returns
         -------
-        labels : ndarray of shape (n_samples,)
-            Index of the cluster each sample belongs to.
+        score : float
+            Negative sum of squared distances to closest cluster center.
         """
-        self.fit(X)
-        return self.labels_
-    
-    def fit_transform(self, X: _Array) -> _Array:
-        """Compute cluster centers and transform X to cluster-distance space.
+        _, inertia = self.predict(X)
+        return -inertia
 
+    def transform(self, X: _Array) -> _Array:
+        """Transform X to a cluster-distance space.
+        
+        In the new space, each dimension is the distance to the cluster centers.
+        
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data to cluster.
-
+            New data to transform.
+            
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_clusters)
-            Transformed data in cluster-distance space.
+            Distance matrix between each sample and each cluster center.
+        """
+        X_arr = np.asarray(X, dtype=float)
+        if X_arr.ndim != 2:
+            raise ValueError("X must be two-dimensional (n_samples, n_features).")
+        if self.cluster_centers_.shape[0] == 0:
+            raise ValueError("KMeans instance is not fitted yet. Call 'fit' with appropriate data.")
+        
+        return np.linalg.norm(X_arr[:, np.newaxis] - self.cluster_centers_, axis=2)
+
+    def fit_transform(self, X: _Array) -> _Array:
+        """Fit to data, then transform it.
+        
+        Fits transformer to X and y with optional parameters fit_params
+        and returns a transformed version of X.
+        
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            New data to transform.
+            
+        Returns
+        -------
+        X_new : ndarray of shape (n_samples, n_clusters)
+            Distance matrix between each sample and each cluster center.
         """
         self.fit(X)
-        X_arr = np.asarray(X, dtype=float)
-        distances = np.linalg.norm(X_arr[:, np.newaxis] - self.cluster_centers_, axis=2)
-        return distances
-    
+        return self.transform(X)
+

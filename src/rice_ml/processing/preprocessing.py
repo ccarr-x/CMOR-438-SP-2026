@@ -156,25 +156,3 @@ def encode_labels(y: ArrayLike) -> np.ndarray:
     unique_labels, encoded = np.unique(y_arr, return_inverse=True)
     return encoded
 
-
-def transform_labels(y: ArrayLike, mapping: dict) -> np.ndarray:
-    """
-    Transform labels using a provided mapping.
-
-    Parameters
-    ----------
-    y : array-like
-        Target labels to transform.
-    mapping : dict
-        Dictionary mapping original labels to new values.
-
-    Returns
-    -------
-    np.ndarray
-        Transformed labels.
-    """
-    y_arr = np.asarray(y)
-    transformed = np.vectorize(mapping.get)(y_arr)
-    if np.any(transformed == None):
-        raise ValueError("All labels in y must be present in the mapping keys.")
-    return transformed
