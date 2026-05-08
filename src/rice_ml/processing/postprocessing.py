@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Dict, Literal, Optional
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 AverageType = Optional[Literal["binary", "micro", "macro", "weighted"]]
 __all__ = ["PostProcessor"]
@@ -200,3 +201,32 @@ class PostProcessor:
         if y_true_arr.shape[0] != y_pred_arr.shape[0]:
             raise ValueError("y_true and y_pred must have the same length.")
         return float(mean_squared_error(y_true_arr, y_pred_arr))
+
+    def roc_auc_score(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:
+        """Return ROC AUC score."""
+        y_true_arr = np.asarray(y_true).ravel()
+        y_pred_arr = np.asarray(y_pred).ravel()
+        if y_true_arr.shape[0] != y_pred_arr.shape[0]:
+            raise ValueError("y_true and y_pred must have the same length.")
+        return float(roc_auc_score(y_true_arr, y_pred_arr))
+
+    def roc_curve(self, y_true: np.ndarray, y_pred: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Return ROC curve."""
+        y_true_arr = np.asarray(y_true).ravel()
+        y_pred_arr = np.asarray(y_pred).ravel()
+        if y_true_arr.shape[0] != y_pred_arr.shape[0]:
+            raise ValueError("y_true and y_pred must have the same length.")
+        return roc_curve(y_true_arr, y_pred_arr)
+
+    def plot_roc_curve(self, y_true: np.ndarray, y_pred: np.ndarray) -> None:
+        """Plot ROC curve."""
+        fpr, tpr, thresholds = self.roc_curve(y_true, y_pred)
+        plt.figure(figsize=(10, 6))
+        plt.plot(fpr, tpr, label='ROC curve')
+        plt.plot([0, 1], [0, 1], 'k--')
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('ROC Curve')
+        plt.legend()
+        plt.show()
+        return fpr, tpr, thresholds

@@ -84,7 +84,7 @@ class DenseNetwork:
             idx += fan_out
         return weights, biases
 
-    def _forward(self, X: _Array, weights: List[_Array], biases: List[_Array]) -> Tuple[List[_Array], List[_Array]]:
+    def _forward(self, X: _Array, weights: List[_Array], biases: List[_Array]) -> Tuple[_Array, List[_Array]]:
         activations: List[_Array] = [X]
         zs: List[_Array] = []
         a = X
@@ -162,6 +162,8 @@ class DenseNetwork:
 
     def predict(self, X: _Array) -> Union[float, _Array]:
         """Predict continuous output(s)."""
+        if not self.weights_ or not self.biases_:
+            raise ValueError("DenseNetwork is not fitted. Call train() before predict().")
         X = np.asarray(X, dtype=float)
         single = X.ndim == 1
         if single:

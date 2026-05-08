@@ -32,11 +32,14 @@ jupyter notebook examples/
 - `Unsupervised_Learning/DBSCAN.ipynb`
 - `Unsupervised_Learning/PCA.ipynb`
 
+### Neural Networks
+
+- `Neural_Networks/Neural_Network.ipynb`
+
 ## Dataset Files
 
 - `datasets/spam_email_dataset.csv`
-- `datasets/Breast_cancer_Reseach (1).csv`
-- `datasets/Smartphone_Addiction_Dataset.csv`
+- `datasets/Breast_Cancer_Research.csv`
 
 ## Helpers
 
