@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from typing import Any, Union
+from typing import Any, Union, Literal
 
 import numpy as np
+import matplotlib.pyplot as plt
 from numpy.typing import NDArray
 
 _Array = NDArray[Any]
+TaskType = Literal["random", "kmeans++"]
 
 class KMeans:
 
@@ -27,6 +29,7 @@ class KMeans:
         self,
         n_clusters: int = 8,
         max_iter: int = 300,
+        task : TaskType = "random",
         tol: float = 1e-4,
         random_state: Union[int, None] = None,
     ) -> None:
@@ -38,24 +41,13 @@ class KMeans:
             raise ValueError("tol must be non-negative.")
         self.n_clusters = n_clusters
         self.max_iter = max_iter
+        self.task = task,
         self.tol = tol
         self.random_state = random_state
         self.cluster_centers_: _Array = np.empty((0, 0))
         self.labels_: _Array = np.empty(0, dtype=int)
         self.inertia_: float = 0.0
         self.n_iter_: int = 0
-
-    def _kmeans_plus_plus_init(self, X, n_clusters, rng):
-    """K-means++ initialization for better convergence."""
-    centers = []
-    centers.append(X[rng.integers(len(X))])
-    
-    for _ in range(1, n_clusters):
-        distances = np.array([min(np.linalg.norm(x - c)**2 for c in centers) for x in X])
-        probabilities = distances / distances.sum()
-        centers.append(X[rng.choice(len(X), p=probabilities)])
-    
-    return np.array(centers)
 
     def fit(self, X: _Array) -> KMeans:
         """Compute k-means clustering.
@@ -80,9 +72,13 @@ class KMeans:
             )
 
         # Initialize cluster centers randomly from the data points
-        rng = np.random.default_rng(self.random_state)
-        initial_idx = rng.choice(n_samples, size=self.n_clusters, replace=False)
-        self.cluster_centers_ = X_arr[initial_idx]
+        if self.task == "random":
+            rng = np.random.default_rng(self.random_state)
+            initial_idx = rng.choice(n_samples, size=self.n_clusters, replace=False)
+            self.cluster_centers_ = X_arr[initial_idx]
+        elif self.task == "kmeans++":
+        # Choose one center at random
+            self.cluster_centers_ = [X_arr[rng.choice(n_samples)]]
 
         for iteration in range(self.max_iter):
             # Assign labels based on closest center
