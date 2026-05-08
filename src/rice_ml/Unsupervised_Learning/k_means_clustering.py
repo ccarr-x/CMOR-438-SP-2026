@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from typing import Any, Union
+from typing import Any, Union, Literal
 
 import numpy as np
+import matplotlib.pyplot as plt
 from numpy.typing import NDArray
 
 _Array = NDArray[Any]
+TaskType = Literal["random", "kmeans++"]
 
 class KMeans:
 
@@ -21,6 +23,7 @@ class KMeans:
         Relative tolerance with regards to inertia to declare convergence.
     random_state : int, optional
         Seed for reproducible initialization of cluster centers.
+    task : Use random kmeans or kmeans++ algorithm
     """
 
     def __init__(
@@ -28,6 +31,7 @@ class KMeans:
         n_clusters: int = 8,
         max_iter: int = 300,
         tol: float = 1e-4,
+        task: TaskType = "random",
         random_state: Union[int, None] = None,
     ) -> None:
         if n_clusters < 1:
@@ -36,9 +40,12 @@ class KMeans:
             raise ValueError("max_iter must be at least 1.")
         if tol < 0:
             raise ValueError("tol must be non-negative.")
+        if task not in ("random", "kmeans++"):
+            raise ValueError("task must be either 'random' or 'kmeans++'.")
         self.n_clusters = n_clusters
         self.max_iter = max_iter
         self.tol = tol
+        self.task = task
         self.random_state = random_state
         self.cluster_centers_: _Array = np.empty((0, 0))
         self.labels_: _Array = np.empty(0, dtype=int)
@@ -69,12 +76,30 @@ class KMeans:
 
         # Initialize cluster centers using kmeans++ when available
         rng = np.random.default_rng(self.random_state)
-        initial_idx = rng.choice(n_samples, size=self.n_clusters, replace=False)
-        self.cluster_centers_ = X_arr[initial_idx]
-        
-        # Use kmeans++ initialization for better convergence
-        if hasattr(self, '_kmeans_plus_plus_init'):
-            self.cluster_centers_ = self._kmeans_plus_plus_init(X_arr, self.n_clusters, rng)
+        if self.task == "random":
+            initial_idx = rng.choice(n_samples, size=self.n_clusters, replace=False)
+            self.cluster_centers_ = X_arr[initial_idx]
+        elif self.task == "kmeans++":
+            # Choose one center at random
+            centers = [X_arr[rng.choice(n_samples)]]
+            
+            # Choose remaining centers using kmeans++ algorithm
+            for _ in range(1, self.n_clusters):
+                # Compute squared distance for each sample to its nearest existing center.
+                d2 = np.min(
+                    np.array([np.sum((X_arr - center) ** 2, axis=1) for center in centers]),
+                    axis=0,
+                )
+                # Choose next center with probability proportional to squared distance
+                total_d2 = d2.sum()
+                if total_d2 == 0:
+                    next_center_idx = rng.choice(n_samples)
+                else:
+                    probabilities = d2 / total_d2
+                    next_center_idx = rng.choice(n_samples, p=probabilities)
+                centers.append(X_arr[next_center_idx])
+            
+            self.cluster_centers_ = np.array(centers)
 
         for iteration in range(self.max_iter):
             # Assign labels based on closest center
@@ -123,39 +148,125 @@ class KMeans:
             raise ValueError("KMeans instance is not fitted yet. Call 'fit' with appropriate data.")
 
         distances = np.linalg.norm(X_arr[:, np.newaxis] - self.cluster_centers_, axis=2)
+        inertia = np.sum((X_arr - self.cluster_centers_[np.argmin(distances, axis=1)]) ** 2)
         return np.argmin(distances, axis=1)
-    
-    def fit_predict(self, X: _Array) -> _Array:
-        """Compute cluster centers and predict cluster index for each sample.
 
+    def score(self, X: _Array) -> float:
+        """Return the opposite of the sum of squared distances to closest cluster center.
+        
+        This is the negative of the inertia, which is the sum of squared distances 
+        from each point to its assigned cluster center.
+        
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data to cluster.
+            New data to score.
+            
+        Returns
+        -------
+        score : float
+            Negative sum of squared distances to closest cluster center.
+        """
+        X_arr = np.asarray(X, dtype=float)
+        if X_arr.ndim != 2:
+            raise ValueError("X must be two-dimensional (n_samples, n_features).")
+        if self.cluster_centers_.shape[0] == 0:
+            raise ValueError("KMeans instance is not fitted yet. Call 'fit' with appropriate data.")
+        
+        labels = self.predict(X_arr)
+        inertia = np.sum((X_arr - self.cluster_centers_[labels]) ** 2)
+        return -inertia
 
+    def transform(self, X: _Array) -> _Array:
+        """Transform X to a cluster-distance space.
+        
+        In the new space, each dimension is the distance to the cluster centers.
+        
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            New data to transform.
+            
+        Returns
+        -------
+        X_new : ndarray of shape (n_samples, n_clusters)
+            Distance matrix between each sample and each cluster center.
+        """
+        X_arr = np.asarray(X, dtype=float)
+        if X_arr.ndim != 2:
+            raise ValueError("X must be two-dimensional (n_samples, n_features).")
+        if self.cluster_centers_.shape[0] == 0:
+            raise ValueError("KMeans instance is not fitted yet. Call 'fit' with appropriate data.")
+        
+        return np.linalg.norm(X_arr[:, np.newaxis] - self.cluster_centers_, axis=2)
+
+    def fit_predict(self, X: _Array) -> _Array:
+        """Compute cluster centers and predict cluster index for each sample.
+        
+        Convenience method; equivalent to calling fit(X) followed by predict(X).
+        
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            New data to transform.
+            
         Returns
         -------
         labels : ndarray of shape (n_samples,)
             Index of the cluster each sample belongs to.
         """
-        self.fit(X)
-        return self.labels_
-    
-    def fit_transform(self, X: _Array) -> _Array:
-        """Compute cluster centers and transform X to cluster-distance space.
+        return self.fit(X).predict(X)
 
+    def fit_transform(self, X: _Array) -> _Array:
+        """Fit to data, then transform it.
+        
+        Fits transformer to X and y with optional parameters fit_params
+        and returns a transformed version of X.
+        
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data to cluster.
-
+            New data to transform.
+            
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_clusters)
-            Transformed data in cluster-distance space.
+            Distance matrix between each sample and each cluster center.
         """
         self.fit(X)
-        X_arr = np.asarray(X, dtype=float)
-        distances = np.linalg.norm(X_arr[:, np.newaxis] - self.cluster_centers_, axis=2)
-        return distances
-    
+        return self.transform(X)
+
+    def plot_decision_boundary(self, X: _Array, y: _Array) -> None:
+        """Plot the decision boundary for 2D data.
+        
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data.
+        y : array-like of shape (n_samples,)
+            Target values.
+        """
+        if X.shape[1] != 2:
+            raise ValueError("X must be two-dimensional (n_samples, 2).")
+        if y.shape[0] != X.shape[0]:
+            raise ValueError("X and y must have the same number of samples.")
+        
+        # Create a mesh to plot the decision boundary
+        h = 0.02  # step size in the mesh
+        x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+        y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+        xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                             np.arange(y_min, y_max, h))
+        
+        # Make predictions on the mesh
+        Z = self.predict(np.c_[xx.ravel(), yy.ravel()])
+        Z = Z.reshape(xx.shape)
+        
+        # Plot the decision boundary
+        plt.contourf(xx, yy, Z, alpha=0.8)
+        plt.scatter(X[:, 0], X[:, 1], c=y, edgecolors='k')
+        plt.title("K-Means Decision Boundary")
+        plt.show()
+
+        
+

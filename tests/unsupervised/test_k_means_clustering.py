@@ -66,3 +66,20 @@ def test_n_clusters_exceeds_samples_raises():
                 dtype=float,
             )
         )
+
+
+def test_kmeans_plus_plus_initialization_runs(sample_data):
+    model = KMeans(n_clusters=2, task="kmeans++", random_state=42)
+    labels = model.fit_predict(sample_data)
+
+    assert labels.shape == (4,)
+    assert model.cluster_centers_.shape == (2, 2)
+    assert model.n_iter_ > 0
+
+
+def test_invalid_task_raises():
+    with pytest.raises(
+        ValueError,
+        match=r"task must be either 'random' or 'kmeans\+\+'\.",
+    ):
+        KMeans(n_clusters=2, task="foo")
