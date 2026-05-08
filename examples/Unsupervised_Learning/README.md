@@ -1,30 +1,46 @@
-# Unsupervised Learning Examples
+# Unsupervised learning examples
 
-This folder contains notebooks demonstrating unsupervised algorithms in `rice_ml`.
+Notebooks for clustering and dimensionality reduction using **`rice_ml.Unsupervised_Learning`** (`KMeans`, DBSCAN, PCA, etc.).
 
 ## Notebooks
 
-- `K_Means_Clustering.ipynb`
-  - Demonstrates K-Means clustering and visualization
-- `DBSCAN.ipynb`
-  - Demonstrates density-based clustering and noise detection
-- `PCA.ipynb`
-  - Demonstrates dimensionality reduction and reconstruction
+| Notebook | Focus |
+|----------|--------|
+| **`K_Means_Clustering.ipynb`** | K-means: fit, predict, cluster centers, typical visualizations. |
+| **`DBSCAN.ipynb`** | Density-based clustering; noise points and parameter sensitivity. |
+| **`PCA.ipynb`** | Principal components, variance explained, low-dimensional views or reconstruction ideas. |
 
-## Running notebooks
+## Prerequisites
 
-From project root:
+- Python **3.9+**:
+
+  ```bash
+  pip install -e .
+  ```
+
+- Jupyter with the same interpreter as above.
+
+## How to run
+
+From the repository root:
 
 ```bash
 jupyter notebook examples/Unsupervised_Learning/
 ```
 
-If needed, install project dependencies first:
+## Data and paths
 
-```bash
-pip install -e .
-```
+- Many notebooks use **synthetic or built-in arrays**; no shared CSV is required unless a cell loads one explicitly.
+- For CSV examples elsewhere in the course, files live under **`examples/datasets/`**.
+- **`examples/load_dataset.py`** can load any file from `examples/datasets/` using portable paths.
 
-## Dataset helpers
+## Tips
 
-Use `examples/load_dataset.py` and files under `examples/datasets/` for local dataset loading.
+- Restart the kernel after updating **`src/rice_ml/Unsupervised_Learning/`**.
+- For **KMeans**, initialization depends on `task` (`"random"` vs `"kmeans++"`); see the class docstring and tests if behavior looks surprising.
+
+## Related
+
+- [Examples hub](../README.md)
+- [Unsupervised package README](../../src/rice_ml/Unsupervised_Learning/README.md)
+- [API reference](../../docs/api.md)

@@ -1,15 +1,17 @@
-"""Postprocessing utilities built on scikit-learn metrics."""
+"""Postprocessing utilities for classification and regression evaluation.
+
+Classification precision, recall, and F1 are computed with NumPy from a confusion matrix.
+Regression metrics and ROC helpers use :mod:`sklearn.metrics`.
+"""
 
 from __future__ import annotations
 
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Dict, Literal, Optional, Tuple
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import seaborn as sns
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, roc_auc_score, roc_curve
-
-sns.set_theme()
 
 AverageType = Optional[Literal["binary", "micro", "macro", "weighted"]]
 __all__ = ["PostProcessor"]
@@ -215,8 +217,11 @@ class PostProcessor:
         """Return confusion matrix for classification."""
         cm, _ = self._confusion_matrix_np(y_true, y_pred, labels=labels)
         return cm
-    def plot_confusion_matrix(self, y_true: np.ndarray, y_pred: np.ndarray, labels: Optional[np.ndarray] = None) -> None:
+    def plot_confusion_matrix(
+        self, y_true: np.ndarray, y_pred: np.ndarray, labels: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """Plot confusion matrix for classification."""
+        sns.set_theme()
         cm = self.confusion_matrix(y_true, y_pred, labels=labels)
         plt.figure(figsize=(10, 6))
         sns.heatmap(cm, annot=True, fmt='d', cmap='viridis')
@@ -297,8 +302,11 @@ class PostProcessor:
             raise ValueError("y_true and y_pred must have the same length.")
         return roc_curve(y_true_arr, y_pred_arr)
 
-    def plot_roc_curve(self, y_true: np.ndarray, y_pred: np.ndarray) -> None:
+    def plot_roc_curve(
+        self, y_true: np.ndarray, y_pred: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Plot ROC curve."""
+        sns.set_theme()
         fpr, tpr, thresholds = self.roc_curve(y_true, y_pred)
         plt.figure(figsize=(10, 6))
         plt.plot(fpr, tpr, label='ROC curve')

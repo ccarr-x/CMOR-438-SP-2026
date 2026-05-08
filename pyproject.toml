@@ -2,7 +2,7 @@
 name = "rice_ml"
 version = "0.1.0"
 description = "CMOR 438 Custom Machine Learning Library"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 authors = [{name = "Cara Carr", email = "cfc6@rice.edu"}]
 readme = "README.md"
 keywords = ["machine learning", "data science", "neural networks"]
@@ -14,7 +14,6 @@ dependencies = [
     "seaborn>=0.12",
     "mlxtend>=0.23",
     "tabulate>=0.9",
-    "pytest>=7.0",
 ]
 
 [build-system]
@@ -25,7 +24,7 @@ build-backend = "setuptools.build_meta"
 find = {where = ["src"]} # rice_ml package found in 'src'
 
 [project.optional-dependencies]
-dev = ["pytest"]
+dev = ["pytest>=7.0"]
 tensorflow = ["tensorflow>=2.16,<2.19"]
 
 [project.urls]

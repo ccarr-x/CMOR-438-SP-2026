@@ -1,54 +1,52 @@
-import pathlib
-import sys
-
 import numpy as np
 import pytest
 
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
+from rice_ml.processing.postprocessing import PostProcessor
 
-from rice_ml.Supervised_Learning.processing.postprocessing import PostProcessor
 
 @pytest.fixture
+def processor():
+    return PostProcessor()
 
-def sample_data():
-    """Simple dataset for postprocessing testing."""
-    predictions = np.array([0.2, 0.5, 0.8, 0.1, 0.9])
-    return predictions
 
-def test_postprocessor_threshold(sample_data):
-    predictions = sample_data
-    postprocessor = PostProcessor(threshold=0.5)
-    binary_predictions = postprocessor.threshold(predictions)
-    expected = np.array([0, 0, 1, 0, 1])
-    assert np.array_equal(binary_predictions, expected), f"Expected {expected}, but got {binary_predictions}"
+def test_classification_metrics_binary(processor):
+    y_true = np.array([0, 1, 1, 0, 1])
+    y_pred = np.array([0, 1, 0, 0, 1])
+    out = processor.classification_metrics(y_true, y_pred, average="binary")
+    assert "classification_error" in out
+    assert "precision" in out
+    assert "recall" in out
+    assert "f1_score" in out
+    assert out["confusion_matrix"].shape == (2, 2)
+    assert 0.0 <= out["classification_error"] <= 1.0
 
-def test_postprocessor_threshold_edge_case(sample_data):
-    predictions = sample_data
-    postprocessor = PostProcessor(threshold=0.5)
-    binary_predictions = postprocessor.threshold(predictions)
-    expected = np.array([0, 0, 1, 0, 1])
-    assert np.array_equal(binary_predictions, expected), f"Expected {expected}, but got {binary_predictions}"
 
-def test_postprocessor_threshold_invalid_input(sample_data):
-    predictions = sample_data
-    postprocessor = PostProcessor(threshold=0.5)
-    with pytest.raises(ValueError):
-        postprocessor.threshold([0.2, 0.5, "invalid", 0.1, 0.9])  # Non-numeric value in predictions
-    with pytest.raises(ValueError):
-        postprocessor.threshold([0.2, 0.5, -0.1, 0.1, 0.9])  # Negative value in predictions
-    with pytest.raises(ValueError):
-        postprocessor.threshold([0.2, 0.5, 1.1, 0.1, 0.9])  # Value greater than 1 in predictions
+def test_precision_recall_f1_helpers(processor):
+    y_true = np.array([0, 1, 1, 0])
+    y_pred = np.array([0, 1, 0, 0])
+    p = processor.precision(y_true, y_pred, average="binary")
+    r = processor.recall(y_true, y_pred, average="binary")
+    f = processor.f1_score(y_true, y_pred, average="binary")
+    assert 0.0 <= p <= 1.0
+    assert 0.0 <= r <= 1.0
+    assert 0.0 <= f <= 1.0
 
-def test_postprocessor_threshold_all_below(sample_data):
-    predictions = np.array([0.1, 0.2, 0.3, 0.4, 0.5])
-    postprocessor = PostProcessor(threshold=0.6)
-    binary_predictions = postprocessor.threshold(predictions)
-    expected = np.array([0, 0, 0, 0, 0])
-    assert np.array_equal(binary_predictions, expected), f"Expected {expected}, but got {binary_predictions}"
 
-def test_postprocessor_threshold_all_above(sample_data):
-    predictions = np.array([0.6, 0.7, 0.8, 0.9, 1.0])
-    postprocessor = PostProcessor(threshold=0.5)
-    binary_predictions = postprocessor.threshold(predictions)
-    expected = np.array([1, 1, 1, 1, 1])
-    assert np.array_equal(binary_predictions, expected), f"Expected {expected}, but got {binary_predictions}"
+def test_accuracy(processor):
+    y_true = np.array([0, 1, 1])
+    y_pred = np.array([0, 1, 0])
+    assert processor.accuracy(y_true, y_pred) == pytest.approx(2.0 / 3.0)
+
+
+def test_multiclass_average_macro(processor):
+    y_true = np.array([0, 1, 2, 2, 1])
+    y_pred = np.array([0, 2, 2, 2, 1])
+    out = processor.classification_metrics(y_true, y_pred, average="macro")
+    assert out["confusion_matrix"].shape == (3, 3)
+
+
+def test_binary_requires_two_classes(processor):
+    y_true = np.array([0, 0, 0])
+    y_pred = np.array([0, 0, 0])
+    with pytest.raises(ValueError, match="exactly 2 classes"):
+        processor.precision(y_true, y_pred, average="binary")

@@ -1,10 +1,5 @@
-import pathlib
-import sys
-
 import numpy as np
 import pytest
-
-sys.path.insert(0, str(pathlib.Path(__file__).parent.parent.parent.parent.parent / "src"))
 
 from rice_ml.Unsupervised_Learning.k_means_clustering import KMeans
 

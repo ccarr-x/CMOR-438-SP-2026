@@ -10,9 +10,10 @@ cd CMOR-438-SP-2026
 pip install -e .
 ```
 
-Run tests:
+Install dev tools (pytest) and run tests:
 
 ```bash
+pip install -e ".[dev]"
 pytest
 ```
 

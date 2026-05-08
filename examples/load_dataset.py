@@ -1,16 +1,30 @@
 """
-Simple dataset loader that works regardless of notebook working directory.
+Dataset loaders for example notebooks and scripts.
+
+Paths are resolved relative to this file so clones work on any machine.
 """
 
-import pandas as pd
 from pathlib import Path
 
-def load_spam_dataset():
-    """Load the spam email dataset using absolute path."""
-    dataset_path = Path("/Users/ccarr21/Desktop/cmor438_carr/CMOR-438-SP-2026/examples/datasets/spam_email_dataset.csv")
-    return pd.read_csv(dataset_path)
+import pandas as pd
 
-def load_dataset(filename):
-    """Load any dataset from the examples/datasets directory."""
-    dataset_path = Path(f"/Users/ccarr21/Desktop/cmor438_carr/CMOR-438-SP-2026/examples/datasets/{filename}")
-    return pd.read_csv(dataset_path)
+_EXAMPLES_ROOT = Path(__file__).resolve().parent
+_DATASETS_DIR = _EXAMPLES_ROOT / "datasets"
+
+
+def dataset_path(filename: str) -> Path:
+    """Return path to a file under ``examples/datasets``."""
+    p = _DATASETS_DIR / filename
+    if not p.is_file():
+        raise FileNotFoundError(f"Dataset not found: {p}")
+    return p
+
+
+def load_spam_dataset():
+    """Load the spam email dataset."""
+    return pd.read_csv(dataset_path("spam_email_dataset.csv"))
+
+
+def load_dataset(filename: str):
+    """Load any CSV from ``examples/datasets``."""
+    return pd.read_csv(dataset_path(filename))

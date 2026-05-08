@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import numpy as np
 
@@ -137,6 +137,32 @@ def min_max_scale(X: ArrayLike) -> np.ndarray:
     ranges_safe = np.where(ranges == 0, 1.0, ranges)
     return (X_arr - min_vals) / ranges_safe
     
+
+def transform_labels(y: ArrayLike, mapping: Dict[Any, Any]) -> np.ndarray:
+    """
+    Map labels using a dictionary lookup.
+
+    Parameters
+    ----------
+    y : array-like
+        Labels to transform.
+    mapping : dict
+        Mapping from each label value to a new value.
+
+    Returns
+    -------
+    np.ndarray
+        Array of mapped labels (same shape as ``y``).
+    """
+    y_arr = np.asarray(y)
+    flat = y_arr.ravel()
+    out: list[Any] = []
+    for val in flat.tolist():
+        if val not in mapping:
+            raise KeyError(f"No mapping for label {val!r}")
+        out.append(mapping[val])
+    return np.asarray(out, dtype=object).reshape(y_arr.shape)
+
 
 def encode_labels(y: ArrayLike) -> np.ndarray:
     """
