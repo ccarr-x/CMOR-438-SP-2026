@@ -30,8 +30,8 @@ class KMeans:
         self,
         n_clusters: int = 8,
         max_iter: int = 300,
+        task : TaskType = "random",
         tol: float = 1e-4,
-        task: TaskType = "random",
         random_state: Union[int, None] = None,
     ) -> None:
         if n_clusters < 1:
@@ -100,6 +100,14 @@ class KMeans:
                 centers.append(X_arr[next_center_idx])
             
             self.cluster_centers_ = np.array(centers)
+        # Initialize cluster centers randomly from the data points
+        if self.task == "random":
+            rng = np.random.default_rng(self.random_state)
+            initial_idx = rng.choice(n_samples, size=self.n_clusters, replace=False)
+            self.cluster_centers_ = X_arr[initial_idx]
+        elif self.task == "kmeans++":
+        # Choose one center at random
+            self.cluster_centers_ = [X_arr[rng.choice(n_samples)]]
 
         for iteration in range(self.max_iter):
             # Assign labels based on closest center
