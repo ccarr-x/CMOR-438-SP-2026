@@ -6,7 +6,7 @@ This directory contains neural network implementations used by the `rice_ml` lib
 
 - `neural_network_class.py` - Core neural-network implementation and training logic
 - `dense_network_class.py` - Dense/feed-forward network variant
-- `preprocessing.py` - Helper preprocessing routines specific to neural-network workflows
+- `preprocessing.py` - Helper preprocessing routines specific to image processing in neural-network workflows
 
 ## Notes
 
